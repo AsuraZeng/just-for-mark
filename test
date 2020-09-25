@@ -1,0 +1,104 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <string.h>
+#include <glob.h>
+
+
+#define GPIO_TOTAL 6
+
+typedef struct _gpiobase
+{
+    int base;
+    char* label;
+}gpiobase_t;
+
+
+typedef struct _gpio_kind
+{
+    int type;
+    char *gpio_name;
+    int value;
+}gpio_kind_t;
+
+enum GPIO_TYPE
+{
+    WKUP_GPIO0,
+    MAIN_GPIO0,
+    MAIN_GPIO1,
+    I2C_GPIO0,
+    I2C_GPIO1,
+    I2C_GPIO2,
+};
+
+gpio_kind_t kind[GPIO_TOTAL] ={
+    {WKUP_GPIO0,"wkup_dd",0},
+    {MAIN_GPIO0,"wkup_dd",0},
+    {MAIN_GPIO1,"xxx",0},
+    {I2C_GPIO0,"xx",0},
+    {I2C_GPIO1,"xxx",0},
+    {I2C_GPIO2,"XXX",0},
+};
+
+gpiobase_t** get_gpio_base(char *dev_path)
+{
+    glob_t results;
+    int i;
+    gpiobase_t **pp = (gpiobase_t **)malloc(sizeof(gpiobase_t *)*GPIO_TOTAL);
+    glob(dev_path, 0, 0, &results);
+    int find_count = (results.gl_pathc < GPIO_TOTAL)?results.gl_pathc:GPIO_TOTAL;
+    for (i = 0; i < find_count; i++)
+    {
+        gpiobase_t *p = (gpiobase_t *)malloc(sizeof(gpiobase_t));
+        //TBD:calc base and label
+        p->base = 11;
+        p->label ="xx";
+        pp[i] = p;
+		printf("%s\n", results.gl_pathv[i]);
+    }
+    globfree(&results);
+
+    return pp;
+}
+
+int query_value(char *label)
+{
+    int i;
+    // printf("query labl %s \n",label);
+    for(i=0; i < GPIO_TOTAL; i++)
+    {
+        // printf("kind labl %s \n",kind[i].gpio_name);
+        if(!strcmp(kind[i].gpio_name,label))
+        {
+            //success
+            return i;
+        }
+    }
+    return 0;
+}
+
+void set_gpio_base()
+{
+    int id;
+    gpiobase_t** b = get_gpio_base("/home/chao/Desktop/*");
+    for(int i=0; i< GPIO_TOTAL;i++)
+    {
+        gpiobase_t *a = (gpiobase_t*)b[i];
+        id = query_value(a->label);
+        printf("id is %d  value %d\n",id,a->base);
+        kind[id].value = a->base;
+    }
+}
+
+int main()
+{
+    //tbd:free pointer
+    int wkupbase;
+    int gpiobase;
+    printf("!");
+    wkupbase = kind[WKUP_GPIO0].value;
+    printf("%d \n",wkupbase);
+
+    set_gpio_base();
+
+    return 0;
+}
